@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect 4 Battle Arena</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .cell {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+        }
+
+        .empty {
+            background-color: rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        .player1 {
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #f87171);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+        }
+
+        .player2 {
+            background: radial-gradient(circle at 30% 30%, #60a5fa, #3b82f6);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+        }
+
+        .powerup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: white;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        .board {
+            background: rgba(30, 64, 175, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .drop-animation {
+            animation: drop 0.5s ease;
+        }
+
+        @keyframes drop {
+            0% { transform: translateY(-500px) rotate(0deg); }
+            100% { transform: translateY(0) rotate(360deg); }
+        }
+
+        .win-animation {
+            animation: win-pulse 1s infinite;
+        }
+
+        @keyframes win-pulse {
+            0% { transform: scale(1); filter: brightness(100%); }
+            50% { transform: scale(1.1); filter: brightness(150%); }
+            100% { transform: scale(1); filter: brightness(100%); }
+        }
+
+        .chat-message {
+            animation: fadeIn 0.3s ease;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        .score-display {
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .power-up-container {
+            position: absolute;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* ...existing styles... */
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+    <!-- Auth Modal -->
+    <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Connect 4 Online</h2>
+                <button id="closeAuthModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="loginForm">
+                <h3 class="text-xl font-semibold mb-4">Login</h3>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2" for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button id="loginBtn" class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition mb-4">
+                    Login
+                </button>
+                <p class="text-center text-gray-600">
+                    Don't have an account? 
+                    <button id="showSignup" class="text-blue-500 hover:underline">Sign up</button>
+                </p>
+            </div>
+            
+            <div id="signupForm" class="hidden">
+                <h3 class="text-xl font-semibold mb-4">Sign Up</h3>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="signupUsername">Username</label>
+                    <input type="text" id="signupUsername" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="signupEmail">Email</label>
+                    <input type="email" id="signupEmail" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2" for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button id="signupBtn" class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition mb-4">
+                    Sign Up
+                </button>
+                <p class="text-center text-gray-600">
+                    Already have an account? 
+                    <button id="showLogin" class="text-blue-500 hover:underline">Login</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <div id="gameContainer" class="container mx-auto px-4 py-8 hidden">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Game Board -->
+            <div class="flex-1">
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-3xl font-bold text-gray-800">Connect 4 Online</h1>
+                    <button id="logoutBtn" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
+                        Logout
+                    </button>
+                </div>
+                
+                <div class="flex justify-between items-center mb-4">
+                    <div id="player1Info" class="flex items-center bg-gray-100 p-3 rounded-lg">
+                        <div class="w-8 h-8 rounded-full bg-red-500 mr-2"></div>
+                        <span id="player1Name" class="font-medium">Player 1</span>
+                        <span id="player1Status" class="ml-2 text-sm text-gray-600">(Waiting)</span>
+                    </div>
+                    
+                    <div id="gameStatus" class="text-lg font-semibold bg-blue-100 px-4 py-2 rounded-lg">
+                        Waiting for players...
+                    </div>
+                    
+                    <div id="player2Info" class="flex items-center bg-gray-100 p-3 rounded-lg">
+                        <div class="w-8 h-8 rounded-full bg-blue-500 mr-2"></div>
+                        <span id="player2Name" class="font-medium">Player 2</span>
+                        <span id="player2Status" class="ml-2 text-sm text-gray-600">(Waiting)</span>
+                    </div>
+                </div>
+                
+                <div class="board inline-block">
+                    <div id="boardHeader" class="flex mb-2">
+                        <div class="column-header w-16 h-8 flex items-center justify-center cursor-pointer hover:bg-blue-600 rounded transition" data-col="0">
+                            <i class="fas fa-arrow-down text-white"></i>
+                        </div>
+                        <div class="column-header w-16 h-8 flex items-center justify-center cursor-pointer hover:bg-blue-600 rounded transition" data-col="1">
+                            <i class="fas fa-arrow-down text-white"></i>
+                        </div>
+                        <div class="column-header w-16 h-8 flex items-center justify-center cursor-pointer hover:bg-blue-600 rounded transition" data-col="2">
+                            <i class="fas fa-arrow-down text-white"></i>
+                        </div>
+                        <div class="column-header w-16 h-8 flex items-center justify-center cursor-pointer hover:bg-blue-600 rounded transition" data-col="3">
+                            <i class="fas fa-arrow-down text-white"></i>
+                        </div>
+                        <div class="column-header w-16 h-8 flex items-center justify-center cursor-pointer hover:bg-blue-600 rounded transition" data-col="4">
+                            <i class="fas fa-arrow-down text-white"></i>
+                        </div>
+                        <div class="column-header w-16 h-8 flex items-center justify-center cursor-pointer hover:bg-blue-600 rounded transition" data-col="5">
+                            <i class="fas fa-arrow-down text-white"></i>
+                        </div>
+                        <div class="column-header w-16 h-8 flex items-center justify-center cursor-pointer hover:bg-blue-600 rounded transition" data-col="6">
+                            <i class="fas fa-arrow-down text-white"></i>
+                        </div>
+                    </div>
+                    <div id="gameBoard" class="grid grid-cols-7 gap-2">
+                        <!-- Cells will be generated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-center">
+                    <button id="newGameBtn" class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition">
+                        New Game
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Chat and Players Section -->
+            <div class="w-full lg:w-80">
+                <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Online Players</h3>
+                    <div id="playersList" class="space-y-2 max-h-60 overflow-y-auto">
+                        <div class="flex items-center p-2 bg-gray-100 rounded">
+                            <div class="w-6 h-6 rounded-full bg-red-500 mr-2"></div>
+                            <span>Player1</span>
+                        </div>
+                        <div class="flex items-center p-2 bg-gray-100 rounded">
+                            <div class="w-6 h-6 rounded-full bg-blue-500 mr-2"></div>
+                            <span>Player2</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <h3 class="text-lg font-semibold mb-4">Game Chat</h3>
+                    <div id="chatMessages" class="mb-4 h-48 overflow-y-auto space-y-2">
+                        <div class="chat-message bg-gray-100 p-2 rounded">
+                            <span class="font-medium text-blue-600">System:</span> Welcome to the game!
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <input type="text" id="chatInput" class="flex-1 px-3 py-2 border rounded-l-lg focus:outline-none" placeholder="Type a message...">
+                        <button id="sendChatBtn" class="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600 transition">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            board: Array(6).fill().map(() => Array(7).fill(0)),
+            currentPlayer: 1,
+            gameActive: false,
+            player1: null,
+            player2: null,
+            currentUser: null,
+            onlinePlayers: [],
+            isPlayer1: false,
+            isPlayer2: false,
+            scores: {
+                player1: 0,
+                player2: 0
+            },
+            powerUps: {
+                extraTurn: { symbol: '⚡', probability: 0.15 },
+                clearColumn: { symbol: '💫', probability: 0.1 },
+                colorChange: { symbol: '🔄', probability: 0.1 }
+            },
+            activePowerUps: Array(6).fill().map(() => Array(7).fill(null)),
+            soundEffects: {
+                drop: new Audio('data:audio/wav;base64,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qJrx4KOQjahZxWbcZgztj2c49nKmkId44S71j0c8eV9yDK6uPRzx5X18eDvjvQ6yKo9ZSS6l//8elePK/Lf//IInrOF/FvDoADYAGBMGb7FtErm5MXMlmPAJQVgWta7Zx2go+8xJ0UiCb8LHHdftWyLJE0QIAIsI+UbXu67dZMjmgDGCGl1H+vpF4NSDckSIkk7Vd+sxEhBQMRU8j/12UIRhzSaUdQ+rQU5kGeFxm+hb1oh6pWWmv3uvmReDl0UnvtapVaIzo1jZbf/pD6ElLqSX+rUmOQNpJFa/r+sa4e/pBlAABoAAAAA3CUgShLdGIxsY7AUABPRrgCABdDuQ5GC7DqPQCgbbJUAoRSUj+NIEig0YfyWUho1VBBBA//uQZB4ABZx5zfMakeAAAAmwAAAAF5F3P0w9GtAAACfAAAAAwLhMDmAYWMgVEG1U0FIGCBgXBXAtfMH10000EEEEEECUBYln03TTTdNBDZopopYvrTTdNa325mImNg3TTPV9q3pmY0xoO6bv3r00y+IDGid/9aaaZTGMuj9mpu9Mpio1dXrr5HERTZSmqU36A3CumzN/9Robv/Xx4v9ijkSRSNLQhAWumap82WRSBUqXStV/YcS+XVLnSS+WLDroqArFkMEsAS+eWmrUzrO0oEmE40RlMZ5+ODIkAyKAGUwZ3mVKmcamcJnMW26MRPgUw6j+LkhyHGVGYjSUUKNpuJUQoOIAyDvEyG8S5yfK6dhZc0Tx1KI/gviKL6qvvFs1+bWtaz58uUNnryq6kt5RzOCkPWlVqVX2a/EEBUdU1KrXLf40GoiiFXK///qpoiDXrOgqDR38JB0bw7SoL+ZB9o1RCkQjQ2CBYZKd/+VJxZRRZlqSkKiws0WFxUyCwsKiMy7hUVFhIaCrNQsKkTIsLivwKKigsj8XYlwt/WKi2N4d//uQRCSAAjURNIHpMZBGYiaQPSYyAAABLAAAAAAAACWAAAAApUF/Mg+0aohSIRobBAsMlO//Kk4soosy1JSFRYWaLC4qZBYWFRGZdwqKiwkNBVmoWFSJkWFxX4FFRQWR+LsS4W/rFRb/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////VEFHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU291bmRib3kuZGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjAwNGh0dHA6Ly93d3cuc291bmRib3kuZGUAAAAAAAAAACU='),
+                win: new Audio('data:audio/wav;base64,//uQRAAAAWMSLwUIYAAsYkXgoQwAEaYLWfkWgAI0wWs/ItAAAGDgYtAgAyN+QWaAAihwMWm4G8QQRDiMcCBcH3Cc+CDv/7xA4Tvh9Rz/y8QADBwMWgQAZG/ILNAARQ4GLTcDeIIIhxGOBAuD7hOfBB3/94gcJ3w+o5/5eIAIAAAVwWgQAVQ2ORaIQwEMAJiDg95G4nQL7mQVWI6GwRcfsZAcsKkJvxgxEjzFUgfHoSQ9Qq7KNwqHwuB13MA4a1q/DmBrHgPcmjiGoh//EwC5nGPEmS4RcfkVKOhJf+WOgoxJclFz3kgn//dBA+ya1GhurNn8zb//9NNutNuhz31f////9vt///z+IdAEAAAK4LQIAKobHItEIYCGAExBwe8jcToF9zIKrEdDYIuP2MgOWFSE34wYiR5iqQPj0JIeoVdlG4VD4XA67mAcNa1fhzA1jwHuTRxDUQ//iYBczjHiTJcIuPyKlHQkv/LHQUYkuSi57yQT//uggfZNajQ3Vmz+Zt//+mm3Wm3Q576v////+32///5/EOgAAADVghQAAAAA=='),
+                powerUp: new Audio('data:audio/wav;base64,//uQRAAAAWMSLwUIYAAsYkXgoQwAEaYLWfkWgAI0wWs/ItAAAGDgYtAgAyN+QWaAAihwMWm4G8QQRDiMcCBcH3Cc+CDv/7xA4Tvh9Rz/y8QADBwMWgQAZG/ILNAARQ4GLTcDeIIIhxGOBAuD7hOfBB3/94gcJ3w+o5/5eIAIAAAVwWgQAVQ2ORaIQwEMAJiDg95G4nQL7mQVWI6GwRcfsZAcsKkJvxgxEjzFUgfHoSQ9Qq7KNwqHwuB13MA4a1q/DmBrHgPcmjiGoh//EwC5nGPEmS4RcfkVKOhJf+WOgoxJclFz3kgn//dBA+ya1GhurNn8zb//9NNutNuhz31f////9vt///z+IdAEAAAK4LQIAKobHItEIYCGAExBwe8jcToF9zIKrEdDYIuP2MgOWFSE34wYiR5iqQPj0JIeoVdlG4VD4XA67mAcNa1fhzA1jwHuTRxDUQ//iYBczjHiTJcIuPyKlHQkv/LHQUYkuSi57yQT//uggfZNajQ3Vmz+Zt//+mm3Wm3Q576v////+32///5/EOgAAADVghQAAAAA==')
+            }
+        };
+
+        // User database in localStorage
+        const USER_DB_KEY = 'connect4_users';
+
+        // Initialize user database if it doesn't exist
+        function initUserDatabase() {
+            if (!localStorage.getItem(USER_DB_KEY)) {
+                localStorage.setItem(USER_DB_KEY, JSON.stringify([]));
+            }
+        }
+
+        // Get all users
+        function getAllUsers() {
+            return JSON.parse(localStorage.getItem(USER_DB_KEY)) || [];
+        }
+
+        // Find user by username
+        function findUserByUsername(username) {
+            const users = getAllUsers();
+            return users.find(user => user.username === username);
+        }
+
+        // Add a new user
+        function addUser(username, email, password) {
+            const users = getAllUsers();
+
+            // Check if username already exists
+            if (users.some(user => user.username === username)) {
+                return { success: false, message: 'Username already exists' };
+            }
+
+            // Check if email already exists
+            if (users.some(user => user.email === email)) {
+                return { success: false, message: 'Email already exists' };
+            }
+
+            // Add new user (in a real app, you would hash the password)
+            const newUser = {
+                id: Date.now().toString(),
+                username,
+                email,
+                password, // Note: In a real app, never store plain text passwords
+                createdAt: new Date().toISOString()
+            };
+
+            users.push(newUser);
+            localStorage.setItem(USER_DB_KEY, JSON.stringify(users));
+
+            return { success: true, user: newUser };
+        }
+
+        // Authenticate user
+        function authenticateUser(username, password) {
+            const user = findUserByUsername(username);
+
+            if (!user) {
+                return { success: false, message: 'User not found' };
+            }
+
+            // In a real app, you would compare hashed passwords
+            if (user.password !== password) {
+                return { success: false, message: 'Invalid password' };
+            }
+
+            return { success: true, user };
+        }
+
+        // DOM elements
+        const authModal = document.getElementById('authModal');
+        const gameContainer = document.getElementById('gameContainer');
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        const showSignup = document.getElementById('showSignup');
+        const showLogin = document.getElementById('showLogin');
+        const loginBtn = document.getElementById('loginBtn');
+        const signupBtn = document.getElementById('signupBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const gameBoard = document.getElementById('gameBoard');
+        const gameStatus = document.getElementById('gameStatus');
+        const player1Info = document.getElementById('player1Info');
+        const player2Info = document.getElementById('player2Info');
+        const player1Name = document.getElementById('player1Name');
+        const player2Name = document.getElementById('player2Name');
+        const player1Status = document.getElementById('player1Status');
+        const player2Status = document.getElementById('player2Status');
+        const playersList = document.getElementById('playersList');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendChatBtn = document.getElementById('sendChatBtn');
+        const closeAuthModal = document.getElementById('closeAuthModal');
+
+        // Initialize the game
+        function initGame() {
+            initUserDatabase();
+
+            // Add game title and instructions
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'text-center mb-8';
+            titleDiv.innerHTML = `
+                <h1 class="text-4xl font-bold mb-4 text-white text-shadow">Connect 4 Battle Arena</h1>
+                <p class="text-lg text-white opacity-80">Collect power-ups and defeat your opponent!</p>
+                <div class="mt-4 space-x-4">
+                    <span class="inline-flex items-center bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                        <span class="text-xl mr-2">⚡</span>
+                        <span class="text-white">Extra Turn</span>
+                    </span>
+                    <span class="inline-flex items-center bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                        <span class="text-xl mr-2">💫</span>
+                        <span class="text-white">Clear Column</span>
+                    </span>
+                    <span class="inline-flex items-center bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                        <span class="text-xl mr-2">🔄</span>
+                        <span class="text-white">Color Change</span>
+                    </span>
+                </div>
+            `;
+            document.querySelector('#gameContainer').insertBefore(titleDiv, document.querySelector('#gameContainer').firstChild);
+
+            // Check if user is logged in
+            const loggedInUser = localStorage.getItem('currentUser');
+
+            if (loggedInUser) {
+                gameState.currentUser = JSON.parse(loggedInUser);
+                authModal.classList.add('hidden');
+                gameContainer.classList.remove('hidden');
+                setupGameBoard();
+                updatePlayerInfo();
+                updateScoreDisplay();
+                simulateOnlinePlayers();
+            } else {
+                authModal.classList.remove('hidden');
+                gameContainer.classList.add('hidden');
+            }
+        }
+
+        // Setup the game board
+        function setupGameBoard() {
+            gameBoard.innerHTML = '';
+            
+            for (let row = 0; row < 6; row++) {
+                for (let col = 0; col < 7; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell empty';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    gameBoard.appendChild(cell);
+                }
+            }
+            
+            // Add column header event listeners
+            document.querySelectorAll('.column-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    const col = parseInt(header.dataset.col);
+                    makeMove(col);
+                });
+            });
+        }
+
+        // Reset the game
+        function resetGame() {
+            gameState.board = Array(6).fill().map(() => Array(7).fill(0));
+            gameState.activePowerUps = Array(6).fill().map(() => Array(7).fill(null));
+            gameState.currentPlayer = 1;
+            gameState.gameActive = true;
+            gameState.skipTurnSwitch = false;
+            
+            setupGameBoard();
+            updateGameStatus();
+            addChatMessage('System', '🎮 New game started! Power-ups are active! 🎮');
+        }
+
+        // Make a move in the game
+        function makeMove(col) {
+            if (!gameState.gameActive) return;
+            
+            // Check if it's the current player's turn
+            if ((gameState.currentPlayer === 1 && !gameState.isPlayer1) || 
+                (gameState.currentPlayer === 2 && !gameState.isPlayer2)) {
+                addChatMessage('System', "It's not your turn!");
+                return;
+            }
+            
+            // Find the first empty row in the column
+            for (let row = 5; row >= 0; row--) {
+                if (gameState.board[row][col] === 0) {
+                    // Update game state
+                    gameState.board[row][col] = gameState.currentPlayer;
+                    
+                    // Update UI
+                    const cellIndex = row * 7 + col;
+                    const cell = gameBoard.children[cellIndex];
+                    cell.classList.remove('empty');
+                    cell.classList.add(gameState.currentPlayer === 1 ? 'player1' : 'player2');
+                    cell.classList.add('drop-animation');
+
+                    // Play drop sound
+                    gameState.soundEffects.drop.currentTime = 0;
+                    gameState.soundEffects.drop.play();
+                    
+                    // Generate random power-up
+                    if (Math.random() < 0.2) { // 20% chance for power-up
+                        const powerUps = Object.entries(gameState.powerUps);
+                        const randomPowerUp = powerUps[Math.floor(Math.random() * powerUps.length)];
+                        if (Math.random() < randomPowerUp[1].probability) {
+                            gameState.activePowerUps[row][col] = randomPowerUp[0];
+                            const powerUpDiv = document.createElement('div');
+                            powerUpDiv.className = 'powerup';
+                            powerUpDiv.innerHTML = randomPowerUp[1].symbol;
+                            cell.appendChild(powerUpDiv);
+                            
+                            // Play power-up sound
+                            gameState.soundEffects.powerUp.currentTime = 0;
+                            gameState.soundEffects.powerUp.play();
+                        }
+                    }
+                    
+                    // Check for win
+                    if (checkWin(row, col)) {
+                        gameState.gameActive = false;
+                        const winner = gameState.currentPlayer === 1 ? gameState.player1 : gameState.player2;
+                        gameStatus.textContent = `${winner} wins!`;
+                        
+                        // Update scores
+                        if (gameState.currentPlayer === 1) {
+                            gameState.scores.player1 += 100;
+                        } else {
+                            gameState.scores.player2 += 100;
+                        }
+                        updateScoreDisplay();
+                        
+                        // Play win sound
+                        gameState.soundEffects.win.currentTime = 0;
+                        gameState.soundEffects.win.play();
+                        
+                        // Highlight winning cells
+                        highlightWinningCells();
+                        return;
+                    }
+                    
+                    // Apply power-up effects
+                    const powerUp = gameState.activePowerUps[row][col];
+                    if (powerUp) {
+                        applyPowerUp(powerUp, row, col);
+                        gameState.activePowerUps[row][col] = null;
+                    }
+                    
+                    // Check for draw
+                    if (checkDraw()) {
+                        gameState.gameActive = false;
+                        gameStatus.textContent = "It's a draw!";
+                        return;
+                    }
+                    
+                    // Switch player (unless extra turn power-up was used)
+                    if (!gameState.skipTurnSwitch) {
+                        gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+                    } else {
+                        gameState.skipTurnSwitch = false;
+                    }
+                    updateGameStatus();
+                    return;
+                }
+            }
+            
+            addChatMessage('System', "Column is full!");
+        }
+
+        // Apply power-up effects
+        function applyPowerUp(powerUp, row, col) {
+            switch (powerUp) {
+                case 'extraTurn':
+                    gameState.skipTurnSwitch = true;
+                    addChatMessage('System', `${gameState.currentPlayer === 1 ? gameState.player1 : gameState.player2} got an extra turn!`);
+                    break;
+                    
+                case 'clearColumn':
+                    for (let r = 0; r < 6; r++) {
+                        if (r !== row) {
+                            gameState.board[r][col] = 0;
+                            const cellIndex = r * 7 + col;
+                            const cell = gameBoard.children[cellIndex];
+                            cell.className = 'cell empty';
+                        }
+                    }
+                    addChatMessage('System', `Column cleared by ${gameState.currentPlayer === 1 ? gameState.player1 : gameState.player2}!`);
+                    break;
+                    
+                case 'colorChange':
+                    // Change all opponent's pieces in adjacent cells to current player's color
+                    const directions = [[-1,-1], [-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0], [1,1]];
+                    directions.forEach(([dr, dc]) => {
+                        const newRow = row + dr;
+                        const newCol = col + dc;
+                        if (newRow >= 0 && newRow < 6 && newCol >= 0 && newCol < 7) {
+                            if (gameState.board[newRow][newCol] === (gameState.currentPlayer === 1 ? 2 : 1)) {
+                                gameState.board[newRow][newCol] = gameState.currentPlayer;
+                                const cellIndex = newRow * 7 + newCol;
+                                const cell = gameBoard.children[cellIndex];
+                                cell.className = `cell ${gameState.currentPlayer === 1 ? 'player1' : 'player2'}`;
+                            }
+                        }
+                    });
+                    addChatMessage('System', `Color change power-up used by ${gameState.currentPlayer === 1 ? gameState.player1 : gameState.player2}!`);
+                    break;
+            }
+        }
+
+        // Update score display
+        function updateScoreDisplay() {
+            player1Status.innerHTML = `(${gameState.isPlayer1 ? 'You - ' : ''}Score: ${gameState.scores.player1})`;
+            player2Status.innerHTML = `(${gameState.isPlayer2 ? 'You - ' : ''}Score: ${gameState.scores.player2})`;
+        }
+
+        // Update game status display
+        function updateGameStatus() {
+            gameStatus.innerHTML = `Turn: ${gameState.currentPlayer === 1 ? gameState.player1 : gameState.player2}`;
+        }
+
+        // Check for a win
+        function checkWin(row, col) {
+            const player = gameState.board[row][col];
+            
+            // Check horizontal, vertical, and diagonal (both directions) for a win
+            return checkDirection(row, col, 0, 1, player) || // Horizontal
+                   checkDirection(row, col, 1, 0, player) || // Vertical
+                   checkDirection(row, col, 1, 1, player) || // Diagonal \
+                   checkDirection(row, col, 1, -1, player);   // Diagonal /
+        }
+
+        // Check a specific direction for a win
+        function checkDirection(row, col, rowDir, colDir, player) {
+            let count = 0;
+            
+            for (let r = row, c = col; r >= 0 && r < 6 && c >= 0 && c < 7; r += rowDir, c += colDir) {
+                if (gameState.board[r][c] === player) {
+                    count++;
+                } else {
+                    break;
+                }
+            }
+            
+            for (let r = row - rowDir, c = col - colDir; r >= 0 && r < 6 && c >= 0 && c < 7; r -= rowDir, c -= colDir) {
+                if (gameState.board[r][c] === player) {
+                    count++;
+                } else {
+                    break;
+                }
+            }
+            
+            return count >= 4;
+        }
+
+        // Check for a draw
+        function checkDraw() {
+            return gameState.board.every(row => row.every(cell => cell !== 0));
+        }
+
+        // Highlight winning cells
+        function highlightWinningCells() {
+            const player = gameState.currentPlayer === 1 ? 'player1' : 'player2';
+            
+            for (let row = 0; row < 6; row++) {
+                for (let col = 0; col < 7; col++) {
+                    if (gameState.board[row][col] === (gameState.currentPlayer === 1 ? 2 : 1)) {
+                        const cellIndex = row * 7 + col;
+                        const cell = gameBoard.children[cellIndex];
+                        cell.classList.add('win-animation');
+                    }
+                }
+            }
+        }
+
+        // Simulate online players (for demo purposes)
+        function simulateOnlinePlayers() {
+            const users = getAllUsers();
+            gameState.onlinePlayers = users.filter(user => user.id !== gameState.currentUser.id);
+            
+            // Update players list UI
+            playersList.innerHTML = '';
+            gameState.onlinePlayers.forEach(player => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'flex items-center p-2 bg-gray-100 rounded';
+                playerDiv.innerHTML = `
+                    <div class="w-6 h-6 rounded-full ${player.isPlayer1 ? 'bg-red-500' : 'bg-blue-500'} mr-2"></div>
+                    <span>${player.username}</span>
+                `;
+                playersList.appendChild(playerDiv);
+            });
+        }
+
+        // Add a chat message to the chat window
+        function addChatMessage(sender, message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message bg-gray-100 p-2 rounded';
+            messageDiv.innerHTML = `<span class="font-medium text-blue-600">${sender}:</span> ${message}`;
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom of chat
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Event listeners
+        loginBtn.addEventListener('click', () => {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const result = authenticateUser(username, password);
+            
+            if (result.success) {
+                gameState.currentUser = result.user;
+                authModal.classList.add('hidden');
+                gameContainer.classList.remove('hidden');
+                setupGameBoard();
+                updatePlayerInfo();
+                updateScoreDisplay();
+                simulateOnlinePlayers();
+            } else {
+                alert(result.message);
+            }
+        });
+
+        signupBtn.addEventListener('click', () => {
+            const username = document.getElementById('signupUsername').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            
+            const result = addUser(username, email, password);
+            
+            if (result.success) {
+                alert('Sign up successful! You can now log in.');
+                document.getElementById('showLogin').click();
+            } else {
+                alert(result.message);
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            gameState.currentUser = null;
+            authModal.classList.remove('hidden');
+            gameContainer.classList.add('hidden');
+        });
+
+        newGameBtn.addEventListener('click', () => {
+            resetGame();
+        });
+
+        sendChatBtn.addEventListener('click', () => {
+            const message = chatInput.value.trim();
+            if (message) {
+                addChatMessage(gameState.currentUser.username, message);
+                chatInput.value = '';
+            }
+        });
+
+        closeAuthModal.addEventListener('click', () => {
+            authModal.classList.add('hidden');
+        });
+
+        // Initialize game on page load
+        initGame();
+    </script>
+</body>
+</html>
