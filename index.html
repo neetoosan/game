@@ -3,114 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connect 4 Battle Arena</title>
+    <title>Connect 4 Online</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-            background-size: 400% 400%;
-            animation: gradient 15s ease infinite;
-        }
-
-        @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
         .cell {
             width: 60px;
             height: 60px;
             border-radius: 50%;
             cursor: pointer;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
         }
-
         .cell:hover {
             transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(255,255,255,0.5);
         }
-
         .empty {
-            background-color: rgba(255,255,255,0.1);
-            backdrop-filter: blur(5px);
+            background-color: #f0f0f0;
         }
-
         .player1 {
-            background: radial-gradient(circle at 30% 30%, #ff6b6b, #f87171);
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+            background-color: #f87171;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
         }
-
         .player2 {
-            background: radial-gradient(circle at 30% 30%, #60a5fa, #3b82f6);
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+            background-color: #60a5fa;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
         }
-
-        .powerup {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 24px;
-            color: white;
-            text-shadow: 0 0 5px rgba(0,0,0,0.5);
-        }
-
         .board {
-            background: rgba(30, 64, 175, 0.9);
+            background-color: #1e40af;
             padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
-
         .drop-animation {
             animation: drop 0.5s ease;
         }
-
         @keyframes drop {
-            0% { transform: translateY(-500px) rotate(0deg); }
-            100% { transform: translateY(0) rotate(360deg); }
+            0% { transform: translateY(-500px); }
+            100% { transform: translateY(0); }
         }
-
         .win-animation {
-            animation: win-pulse 1s infinite;
+            animation: pulse 1s infinite;
         }
-
-        @keyframes win-pulse {
-            0% { transform: scale(1); filter: brightness(100%); }
-            50% { transform: scale(1.1); filter: brightness(150%); }
-            100% { transform: scale(1); filter: brightness(100%); }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
-
         .chat-message {
             animation: fadeIn 0.3s ease;
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(5px);
         }
-
-        .score-display {
-            font-family: 'Press Start 2P', cursive;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        .power-up-container {
-            position: absolute;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
-
-        /* ...existing styles... */
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">
     <!-- Auth Modal -->
@@ -278,22 +224,7 @@
             currentUser: null,
             onlinePlayers: [],
             isPlayer1: false,
-            isPlayer2: false,
-            scores: {
-                player1: 0,
-                player2: 0
-            },
-            powerUps: {
-                extraTurn: { symbol: '⚡', probability: 0.15 },
-                clearColumn: { symbol: '💫', probability: 0.1 },
-                colorChange: { symbol: '🔄', probability: 0.1 }
-            },
-            activePowerUps: Array(6).fill().map(() => Array(7).fill(null)),
-            soundEffects: {
-                drop: new Audio('data:audio/wav;base64,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qJrx4KOQjahZxWbcZgztj2c49nKmkId44S71j0c8eV9yDK6uPRzx5X18eDvjvQ6yKo9ZSS6l//8elePK/Lf//IInrOF/FvDoADYAGBMGb7FtErm5MXMlmPAJQVgWta7Zx2go+8xJ0UiCb8LHHdftWyLJE0QIAIsI+UbXu67dZMjmgDGCGl1H+vpF4NSDckSIkk7Vd+sxEhBQMRU8j/12UIRhzSaUdQ+rQU5kGeFxm+hb1oh6pWWmv3uvmReDl0UnvtapVaIzo1jZbf/pD6ElLqSX+rUmOQNpJFa/r+sa4e/pBlAABoAAAAA3CUgShLdGIxsY7AUABPRrgCABdDuQ5GC7DqPQCgbbJUAoRSUj+NIEig0YfyWUho1VBBBA//uQZB4ABZx5zfMakeAAAAmwAAAAF5F3P0w9GtAAACfAAAAAwLhMDmAYWMgVEG1U0FIGCBgXBXAtfMH10000EEEEEECUBYln03TTTdNBDZopopYvrTTdNa325mImNg3TTPV9q3pmY0xoO6bv3r00y+IDGid/9aaaZTGMuj9mpu9Mpio1dXrr5HERTZSmqU36A3CumzN/9Robv/Xx4v9ijkSRSNLQhAWumap82WRSBUqXStV/YcS+XVLnSS+WLDroqArFkMEsAS+eWmrUzrO0oEmE40RlMZ5+ODIkAyKAGUwZ3mVKmcamcJnMW26MRPgUw6j+LkhyHGVGYjSUUKNpuJUQoOIAyDvEyG8S5yfK6dhZc0Tx1KI/gviKL6qvvFs1+bWtaz58uUNnryq6kt5RzOCkPWlVqVX2a/EEBUdU1KrXLf40GoiiFXK///qpoiDXrOgqDR38JB0bw7SoL+ZB9o1RCkQjQ2CBYZKd/+VJxZRRZlqSkKiws0WFxUyCwsKiMy7hUVFhIaCrNQsKkTIsLivwKKigsj8XYlwt/WKi2N4d//uQRCSAAjURNIHpMZBGYiaQPSYyAAABLAAAAAAAACWAAAAApUF/Mg+0aohSIRobBAsMlO//Kk4soosy1JSFRYWaLC4qZBYWFRGZdwqKiwkNBVmoWFSJkWFxX4FFRQWR+LsS4W/rFRb/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////VEFHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU291bmRib3kuZGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjAwNGh0dHA6Ly93d3cuc291bmRib3kuZGUAAAAAAAAAACU='),
-                win: new Audio('data:audio/wav;base64,//uQRAAAAWMSLwUIYAAsYkXgoQwAEaYLWfkWgAI0wWs/ItAAAGDgYtAgAyN+QWaAAihwMWm4G8QQRDiMcCBcH3Cc+CDv/7xA4Tvh9Rz/y8QADBwMWgQAZG/ILNAARQ4GLTcDeIIIhxGOBAuD7hOfBB3/94gcJ3w+o5/5eIAIAAAVwWgQAVQ2ORaIQwEMAJiDg95G4nQL7mQVWI6GwRcfsZAcsKkJvxgxEjzFUgfHoSQ9Qq7KNwqHwuB13MA4a1q/DmBrHgPcmjiGoh//EwC5nGPEmS4RcfkVKOhJf+WOgoxJclFz3kgn//dBA+ya1GhurNn8zb//9NNutNuhz31f////9vt///z+IdAEAAAK4LQIAKobHItEIYCGAExBwe8jcToF9zIKrEdDYIuP2MgOWFSE34wYiR5iqQPj0JIeoVdlG4VD4XA67mAcNa1fhzA1jwHuTRxDUQ//iYBczjHiTJcIuPyKlHQkv/LHQUYkuSi57yQT//uggfZNajQ3Vmz+Zt//+mm3Wm3Q576v////+32///5/EOgAAADVghQAAAAA=='),
-                powerUp: new Audio('data:audio/wav;base64,//uQRAAAAWMSLwUIYAAsYkXgoQwAEaYLWfkWgAI0wWs/ItAAAGDgYtAgAyN+QWaAAihwMWm4G8QQRDiMcCBcH3Cc+CDv/7xA4Tvh9Rz/y8QADBwMWgQAZG/ILNAARQ4GLTcDeIIIhxGOBAuD7hOfBB3/94gcJ3w+o5/5eIAIAAAVwWgQAVQ2ORaIQwEMAJiDg95G4nQL7mQVWI6GwRcfsZAcsKkJvxgxEjzFUgfHoSQ9Qq7KNwqHwuB13MA4a1q/DmBrHgPcmjiGoh//EwC5nGPEmS4RcfkVKOhJf+WOgoxJclFz3kgn//dBA+ya1GhurNn8zb//9NNutNuhz31f////9vt///z+IdAEAAAK4LQIAKobHItEIYCGAExBwe8jcToF9zIKrEdDYIuP2MgOWFSE34wYiR5iqQPj0JIeoVdlG4VD4XA67mAcNa1fhzA1jwHuTRxDUQ//iYBczjHiTJcIuPyKlHQkv/LHQUYkuSi57yQT//uggfZNajQ3Vmz+Zt//+mm3Wm3Q576v////+32///5/EOgAAADVghQAAAAA==')
-            }
+            isPlayer2: false
         };
 
         // User database in localStorage
@@ -391,29 +322,6 @@
         function initGame() {
             initUserDatabase();
 
-            // Add game title and instructions
-            const titleDiv = document.createElement('div');
-            titleDiv.className = 'text-center mb-8';
-            titleDiv.innerHTML = `
-                <h1 class="text-4xl font-bold mb-4 text-white text-shadow">Connect 4 Battle Arena</h1>
-                <p class="text-lg text-white opacity-80">Collect power-ups and defeat your opponent!</p>
-                <div class="mt-4 space-x-4">
-                    <span class="inline-flex items-center bg-white bg-opacity-20 px-3 py-1 rounded-full">
-                        <span class="text-xl mr-2">⚡</span>
-                        <span class="text-white">Extra Turn</span>
-                    </span>
-                    <span class="inline-flex items-center bg-white bg-opacity-20 px-3 py-1 rounded-full">
-                        <span class="text-xl mr-2">💫</span>
-                        <span class="text-white">Clear Column</span>
-                    </span>
-                    <span class="inline-flex items-center bg-white bg-opacity-20 px-3 py-1 rounded-full">
-                        <span class="text-xl mr-2">🔄</span>
-                        <span class="text-white">Color Change</span>
-                    </span>
-                </div>
-            `;
-            document.querySelector('#gameContainer').insertBefore(titleDiv, document.querySelector('#gameContainer').firstChild);
-
             // Check if user is logged in
             const loggedInUser = localStorage.getItem('currentUser');
 
@@ -423,7 +331,6 @@
                 gameContainer.classList.remove('hidden');
                 setupGameBoard();
                 updatePlayerInfo();
-                updateScoreDisplay();
                 simulateOnlinePlayers();
             } else {
                 authModal.classList.remove('hidden');
@@ -454,19 +361,6 @@
             });
         }
 
-        // Reset the game
-        function resetGame() {
-            gameState.board = Array(6).fill().map(() => Array(7).fill(0));
-            gameState.activePowerUps = Array(6).fill().map(() => Array(7).fill(null));
-            gameState.currentPlayer = 1;
-            gameState.gameActive = true;
-            gameState.skipTurnSwitch = false;
-            
-            setupGameBoard();
-            updateGameStatus();
-            addChatMessage('System', '🎮 New game started! Power-ups are active! 🎮');
-        }
-
         // Make a move in the game
         function makeMove(col) {
             if (!gameState.gameActive) return;
@@ -490,27 +384,6 @@
                     cell.classList.remove('empty');
                     cell.classList.add(gameState.currentPlayer === 1 ? 'player1' : 'player2');
                     cell.classList.add('drop-animation');
-
-                    // Play drop sound
-                    gameState.soundEffects.drop.currentTime = 0;
-                    gameState.soundEffects.drop.play();
-                    
-                    // Generate random power-up
-                    if (Math.random() < 0.2) { // 20% chance for power-up
-                        const powerUps = Object.entries(gameState.powerUps);
-                        const randomPowerUp = powerUps[Math.floor(Math.random() * powerUps.length)];
-                        if (Math.random() < randomPowerUp[1].probability) {
-                            gameState.activePowerUps[row][col] = randomPowerUp[0];
-                            const powerUpDiv = document.createElement('div');
-                            powerUpDiv.className = 'powerup';
-                            powerUpDiv.innerHTML = randomPowerUp[1].symbol;
-                            cell.appendChild(powerUpDiv);
-                            
-                            // Play power-up sound
-                            gameState.soundEffects.powerUp.currentTime = 0;
-                            gameState.soundEffects.powerUp.play();
-                        }
-                    }
                     
                     // Check for win
                     if (checkWin(row, col)) {
@@ -518,28 +391,9 @@
                         const winner = gameState.currentPlayer === 1 ? gameState.player1 : gameState.player2;
                         gameStatus.textContent = `${winner} wins!`;
                         
-                        // Update scores
-                        if (gameState.currentPlayer === 1) {
-                            gameState.scores.player1 += 100;
-                        } else {
-                            gameState.scores.player2 += 100;
-                        }
-                        updateScoreDisplay();
-                        
-                        // Play win sound
-                        gameState.soundEffects.win.currentTime = 0;
-                        gameState.soundEffects.win.play();
-                        
                         // Highlight winning cells
                         highlightWinningCells();
                         return;
-                    }
-                    
-                    // Apply power-up effects
-                    const powerUp = gameState.activePowerUps[row][col];
-                    if (powerUp) {
-                        applyPowerUp(powerUp, row, col);
-                        gameState.activePowerUps[row][col] = null;
                     }
                     
                     // Check for draw
@@ -549,12 +403,8 @@
                         return;
                     }
                     
-                    // Switch player (unless extra turn power-up was used)
-                    if (!gameState.skipTurnSwitch) {
-                        gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
-                    } else {
-                        gameState.skipTurnSwitch = false;
-                    }
+                    // Switch player
+                    gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
                     updateGameStatus();
                     return;
                 }
@@ -563,89 +413,53 @@
             addChatMessage('System', "Column is full!");
         }
 
-        // Apply power-up effects
-        function applyPowerUp(powerUp, row, col) {
-            switch (powerUp) {
-                case 'extraTurn':
-                    gameState.skipTurnSwitch = true;
-                    addChatMessage('System', `${gameState.currentPlayer === 1 ? gameState.player1 : gameState.player2} got an extra turn!`);
-                    break;
-                    
-                case 'clearColumn':
-                    for (let r = 0; r < 6; r++) {
-                        if (r !== row) {
-                            gameState.board[r][col] = 0;
-                            const cellIndex = r * 7 + col;
-                            const cell = gameBoard.children[cellIndex];
-                            cell.className = 'cell empty';
-                        }
-                    }
-                    addChatMessage('System', `Column cleared by ${gameState.currentPlayer === 1 ? gameState.player1 : gameState.player2}!`);
-                    break;
-                    
-                case 'colorChange':
-                    // Change all opponent's pieces in adjacent cells to current player's color
-                    const directions = [[-1,-1], [-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0], [1,1]];
-                    directions.forEach(([dr, dc]) => {
-                        const newRow = row + dr;
-                        const newCol = col + dc;
-                        if (newRow >= 0 && newRow < 6 && newCol >= 0 && newCol < 7) {
-                            if (gameState.board[newRow][newCol] === (gameState.currentPlayer === 1 ? 2 : 1)) {
-                                gameState.board[newRow][newCol] = gameState.currentPlayer;
-                                const cellIndex = newRow * 7 + newCol;
-                                const cell = gameBoard.children[cellIndex];
-                                cell.className = `cell ${gameState.currentPlayer === 1 ? 'player1' : 'player2'}`;
-                            }
-                        }
-                    });
-                    addChatMessage('System', `Color change power-up used by ${gameState.currentPlayer === 1 ? gameState.player1 : gameState.player2}!`);
-                    break;
-            }
-        }
-
-        // Update score display
-        function updateScoreDisplay() {
-            player1Status.innerHTML = `(${gameState.isPlayer1 ? 'You - ' : ''}Score: ${gameState.scores.player1})`;
-            player2Status.innerHTML = `(${gameState.isPlayer2 ? 'You - ' : ''}Score: ${gameState.scores.player2})`;
-        }
-
-        // Update game status display
-        function updateGameStatus() {
-            gameStatus.innerHTML = `Turn: ${gameState.currentPlayer === 1 ? gameState.player1 : gameState.player2}`;
-        }
-
         // Check for a win
         function checkWin(row, col) {
             const player = gameState.board[row][col];
             
-            // Check horizontal, vertical, and diagonal (both directions) for a win
-            return checkDirection(row, col, 0, 1, player) || // Horizontal
-                   checkDirection(row, col, 1, 0, player) || // Vertical
-                   checkDirection(row, col, 1, 1, player) || // Diagonal \
-                   checkDirection(row, col, 1, -1, player);   // Diagonal /
+            // Check horizontal
+            let count = 1;
+            // Left
+            for (let c = col - 1; c >= 0 && gameState.board[row][c] === player; c--) count++;
+            // Right
+            for (let c = col + 1; c < 7 && gameState.board[row][c] === player; c++) count++;
+            if (count >= 4) return true;
+            
+            // Check vertical
+            count = 1;
+            // Up
+            for (let r = row - 1; r >= 0 && gameState.board[r][col] === player; r--) count++;
+            // Down (not needed as we place from bottom)
+            if (count >= 4) return true;
+            
+            // Check diagonal (top-left to bottom-right)
+            count = 1;
+            // Up-left
+            for (let r = row - 1, c = col - 1; r >= 0 && c >= 0 && gameState.board[r][c] === player; r--, c--) count++;
+            // Down-right
+            for (let r = row + 1, c = col + 1; r < 6 && c < 7 && gameState.board[r][c] === player; r++, c++) count++;
+            if (count >= 4) return true;
+            
+            // Check diagonal (top-right to bottom-left)
+            count = 1;
+            // Up-right
+            for (let r = row - 1, c = col + 1; r >= 0 && c < 7 && gameState.board[r][c] === player; r--, c++) count++;
+            // Down-left
+            for (let r = row + 1, c = col - 1; r < 6 && c >= 0 && gameState.board[r][c] === player; r++, c--) count++;
+            if (count >= 4) return true;
+            
+            return false;
         }
 
-        // Check a specific direction for a win
-        function checkDirection(row, col, rowDir, colDir, player) {
-            let count = 0;
+        // Highlight winning cells
+        function highlightWinningCells() {
+            // In a real implementation, we would track the winning cells during checkWin
+            // For this demo, we'll just highlight all cells of the winning player
+            const winningClass = gameState.currentPlayer === 1 ? 'player1' : 'player2';
             
-            for (let r = row, c = col; r >= 0 && r < 6 && c >= 0 && c < 7; r += rowDir, c += colDir) {
-                if (gameState.board[r][c] === player) {
-                    count++;
-                } else {
-                    break;
-                }
-            }
-            
-            for (let r = row - rowDir, c = col - colDir; r >= 0 && r < 6 && c >= 0 && c < 7; r -= rowDir, c -= colDir) {
-                if (gameState.board[r][c] === player) {
-                    count++;
-                } else {
-                    break;
-                }
-            }
-            
-            return count >= 4;
+            document.querySelectorAll(`.${winningClass}`).forEach(cell => {
+                cell.classList.add('win-animation');
+            });
         }
 
         // Check for a draw
@@ -653,93 +467,227 @@
             return gameState.board.every(row => row.every(cell => cell !== 0));
         }
 
-        // Highlight winning cells
-        function highlightWinningCells() {
-            const player = gameState.currentPlayer === 1 ? 'player1' : 'player2';
+        // Reset the game
+        function resetGame() {
+            gameState.board = Array(6).fill().map(() => Array(7).fill(0));
+            gameState.currentPlayer = 1;
+            gameState.gameActive = true;
             
-            for (let row = 0; row < 6; row++) {
-                for (let col = 0; col < 7; col++) {
-                    if (gameState.board[row][col] === (gameState.currentPlayer === 1 ? 2 : 1)) {
-                        const cellIndex = row * 7 + col;
-                        const cell = gameBoard.children[cellIndex];
-                        cell.classList.add('win-animation');
-                    }
-                }
+            setupGameBoard();
+            updateGameStatus();
+        }
+
+        // Update game status display
+        function updateGameStatus() {
+            if (!gameState.gameActive) return;
+            
+            const currentPlayerName = gameState.currentPlayer === 1 ? gameState.player1 : gameState.player2;
+            gameStatus.textContent = `${currentPlayerName}'s turn`;
+            
+            if ((gameState.currentPlayer === 1 && gameState.isPlayer1) || 
+                (gameState.currentPlayer === 2 && gameState.isPlayer2)) {
+                gameStatus.textContent += " (Your turn)";
             }
         }
 
-        // Simulate online players (for demo purposes)
-        function simulateOnlinePlayers() {
-            const users = getAllUsers();
-            gameState.onlinePlayers = users.filter(user => user.id !== gameState.currentUser.id);
+        // Update player info display
+        function updatePlayerInfo() {
+            player1Name.textContent = gameState.player1 || 'Waiting...';
+            player2Name.textContent = gameState.player2 || 'Waiting...';
             
-            // Update players list UI
+            if (gameState.player1) {
+                player1Status.textContent = gameState.isPlayer1 ? '(You)' : '(Opponent)';
+            } else {
+                player1Status.textContent = '(Waiting)';
+            }
+            
+            if (gameState.player2) {
+                player2Status.textContent = gameState.isPlayer2 ? '(You)' : '(Opponent)';
+            } else {
+                player2Status.textContent = '(Waiting)';
+            }
+        }
+
+        // Simulate online players (in a real app, this would come from a server)
+        function simulateOnlinePlayers() {
+            gameState.onlinePlayers = [
+                { id: 1, username: 'Player1', status: 'online' },
+                { id: 2, username: 'Player2', status: 'online' },
+                { id: 3, username: 'Player3', status: 'online' },
+                { id: 4, username: 'Player4', status: 'away' }
+            ];
+            
+            updatePlayersList();
+        }
+
+        // Update online players list
+        function updatePlayersList() {
             playersList.innerHTML = '';
+            
             gameState.onlinePlayers.forEach(player => {
-                const playerDiv = document.createElement('div');
-                playerDiv.className = 'flex items-center p-2 bg-gray-100 rounded';
-                playerDiv.innerHTML = `
-                    <div class="w-6 h-6 rounded-full ${player.isPlayer1 ? 'bg-red-500' : 'bg-blue-500'} mr-2"></div>
-                    <span>${player.username}</span>
-                `;
-                playersList.appendChild(playerDiv);
+                const playerElement = document.createElement('div');
+                playerElement.className = `flex items-center p-2 ${player.status === 'online' ? 'bg-green-50' : 'bg-gray-100'} rounded`;
+                
+                const statusDot = document.createElement('div');
+                statusDot.className = `w-3 h-3 rounded-full mr-2 ${player.status === 'online' ? 'bg-green-500' : 'bg-yellow-500'}`;
+                
+                const usernameSpan = document.createElement('span');
+                usernameSpan.textContent = player.username;
+                
+                if (player.username === gameState.currentUser.username) {
+                    usernameSpan.className = 'font-bold';
+                }
+                
+                playerElement.appendChild(statusDot);
+                playerElement.appendChild(usernameSpan);
+                playersList.appendChild(playerElement);
             });
         }
 
-        // Add a chat message to the chat window
+        // Add a chat message
         function addChatMessage(sender, message) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'chat-message bg-gray-100 p-2 rounded';
-            messageDiv.innerHTML = `<span class="font-medium text-blue-600">${sender}:</span> ${message}`;
-            chatMessages.appendChild(messageDiv);
+            const messageElement = document.createElement('div');
+            messageElement.className = 'chat-message bg-gray-100 p-2 rounded mb-2';
             
-            // Scroll to bottom of chat
+            const senderSpan = document.createElement('span');
+            senderSpan.className = 'font-medium';
+            
+            if (sender === 'System') {
+                senderSpan.className += ' text-blue-600';
+            } else if (sender === gameState.currentUser.username) {
+                senderSpan.className += ' text-green-600';
+            } else {
+                senderSpan.className += ' text-purple-600';
+            }
+            
+            senderSpan.textContent = `${sender}: `;
+            
+            const messageSpan = document.createElement('span');
+            messageSpan.textContent = message;
+            
+            messageElement.appendChild(senderSpan);
+            messageElement.appendChild(messageSpan);
+            chatMessages.appendChild(messageElement);
+            
+            // Scroll to bottom
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
         // Event listeners
+        showSignup.addEventListener('click', () => {
+            loginForm.classList.add('hidden');
+            signupForm.classList.remove('hidden');
+        });
+
+        showLogin.addEventListener('click', () => {
+            signupForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+        });
+
         loginBtn.addEventListener('click', () => {
-            const username = document.getElementById('loginUsername').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            const result = authenticateUser(username, password);
-            
-            if (result.success) {
-                gameState.currentUser = result.user;
-                authModal.classList.add('hidden');
-                gameContainer.classList.remove('hidden');
-                setupGameBoard();
-                updatePlayerInfo();
-                updateScoreDisplay();
-                simulateOnlinePlayers();
-            } else {
-                alert(result.message);
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            if (!username || !password) {
+                alert('Please enter both username and password');
+                return;
             }
+
+            // Authenticate user
+            const authResult = authenticateUser(username, password);
+
+            if (!authResult.success) {
+                alert(authResult.message);
+                return;
+            }
+
+            // Login successful
+            gameState.currentUser = authResult.user;
+            localStorage.setItem('currentUser', JSON.stringify(gameState.currentUser));
+
+            // Assign player (simulate joining a game)
+            if (!gameState.player1) {
+                gameState.player1 = username;
+                gameState.isPlayer1 = true;
+            } else if (!gameState.player2) {
+                gameState.player2 = username;
+                gameState.isPlayer2 = true;
+            }
+
+            gameState.gameActive = true;
+
+            authModal.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+            setupGameBoard();
+            updatePlayerInfo();
+            simulateOnlinePlayers();
+            updateGameStatus();
+
+            addChatMessage('System', `Welcome, ${username}!`);
         });
 
         signupBtn.addEventListener('click', () => {
-            const username = document.getElementById('signupUsername').value;
-            const email = document.getElementById('signupEmail').value;
-            const password = document.getElementById('signupPassword').value;
-            
-            const result = addUser(username, email, password);
-            
-            if (result.success) {
-                alert('Sign up successful! You can now log in.');
-                document.getElementById('showLogin').click();
-            } else {
-                alert(result.message);
+            const username = document.getElementById('signupUsername').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value.trim();
+
+            if (!username || !email || !password) {
+                alert('Please fill in all fields');
+                return;
             }
+
+            // Basic validation
+            if (username.length < 3) {
+                alert('Username must be at least 3 characters');
+                return;
+            }
+
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters');
+                return;
+            }
+
+            if (!/^\S+@\S+\.\S+$/.test(email)) {
+                alert('Please enter a valid email address');
+                return;
+            }
+
+            // Register new user
+            const signupResult = addUser(username, email, password);
+
+            if (!signupResult.success) {
+                alert(signupResult.message);
+                return;
+            }
+
+            alert('Account created successfully! Please login.');
+            signupForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+
+            // Auto-fill login form
+            document.getElementById('loginUsername').value = username;
+            document.getElementById('loginPassword').value = password;
         });
 
         logoutBtn.addEventListener('click', () => {
+            // Remove current player from game
+            if (gameState.isPlayer1) {
+                gameState.player1 = null;
+                gameState.isPlayer1 = false;
+            } else if (gameState.isPlayer2) {
+                gameState.player2 = null;
+                gameState.isPlayer2 = false;
+            }
+            
+            localStorage.removeItem('currentUser');
             gameState.currentUser = null;
-            authModal.classList.remove('hidden');
             gameContainer.classList.add('hidden');
+            authModal.classList.remove('hidden');
         });
 
         newGameBtn.addEventListener('click', () => {
             resetGame();
+            addChatMessage('System', 'New game started!');
         });
 
         sendChatBtn.addEventListener('click', () => {
@@ -750,11 +698,17 @@
             }
         });
 
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendChatBtn.click();
+            }
+        });
+
         closeAuthModal.addEventListener('click', () => {
             authModal.classList.add('hidden');
         });
 
-        // Initialize game on page load
+        // Initialize the app
         initGame();
     </script>
 </body>
